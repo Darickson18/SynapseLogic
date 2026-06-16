@@ -26,7 +26,7 @@ public class MainGUI extends JFrame {
         initComponents();
         graph = new DirectedGraph();
         neuroTable = new Map<>();
-        fileManager = new FileManager(graph, neuroTable);
+        fileManager = new FileManager(graph, neuroTable, this);
     }
 
     private void initComponents() {
