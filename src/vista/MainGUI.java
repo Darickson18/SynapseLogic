@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class MainGUI extends JFrame {
     private DirectedGraph graph;
-    private HashTable<String, Neurotransmisor> neuroTable;
+    private Map<String, Neurotransmisor> neuroTable;
     private FileManager fileManager;
     private GraphVisualizer visualizer;
     private boolean graphLoaded = false;
@@ -25,7 +25,7 @@ public class MainGUI extends JFrame {
         setLocationRelativeTo(null);
         initComponents();
         graph = new DirectedGraph();
-        neuroTable = new HashTable<>();
+        neuroTable = new Map<>();
         fileManager = new FileManager(graph, neuroTable);
     }
 
@@ -67,7 +67,6 @@ public class MainGUI extends JFrame {
         center.add(sp, BorderLayout.CENTER);
         add(center, BorderLayout.CENTER);
 
-        // Listeners
         btnLoadGraph.addActionListener(e -> loadGraph());
         btnLoadNeuro.addActionListener(e -> loadNeuro());
         btnShowGraph.addActionListener(e -> showGraph());
@@ -87,7 +86,7 @@ public class MainGUI extends JFrame {
             if (opt == JOptionPane.YES_OPTION) { if (!fileManager.saveGraphToCSV()) return; }
             else if (opt == JOptionPane.CANCEL_OPTION) return;
             graph = new DirectedGraph();
-            neuroTable = new HashTable<>();
+            neuroTable = new Map<>();
             fileManager = new FileManager(graph, neuroTable);
             graphLoaded = false;
         }
