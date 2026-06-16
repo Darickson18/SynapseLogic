@@ -7,165 +7,336 @@ import java.awt.*;
 import java.util.Set;
 
 public class MainGUI extends JFrame {
+    
     private DirectedGraph graph;
     private Map<String, Neurotransmisor> neuroTable;
     private FileManager fileManager;
     private GraphVisualizer visualizer;
-    private boolean graphLoaded = false;
-
-    private JButton btnLoadGraph, btnLoadNeuro, btnShowGraph, btnDetectIsolated, btnDijkstra;
-    private JButton btnFatigue, btnAddNeuron, btnRemoveNeuron, btnSaveGraph;
+    
     private JTextField txtSource, txtTarget, txtNeuronId;
     private JTextArea txtResult;
-
+    private JRadioButton rdBFS, rdDFS;
+    private ButtonGroup bgAlgorithm;
+    private boolean graphLoaded = false;
+    
     public MainGUI() {
-        setTitle("SynapseLogic - Análisis de Conectividad Neuronal");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
-        setLocationRelativeTo(null);
+        initModel();
         initComponents();
+    }
+    
+    private void initModel() {
         graph = new DirectedGraph();
         neuroTable = new Map<>();
         fileManager = new FileManager(graph, neuroTable, this);
+        visualizer = null;
     }
-
+    
     private void initComponents() {
+        setTitle("SynapseLogic - Analisis de Conectividad Neuronal");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(900, 700);
         setLayout(new BorderLayout());
-
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        btnLoadGraph = new JButton("Cargar red sináptica");
-        btnLoadNeuro = new JButton("Cargar diccionario NT");
-        btnShowGraph = new JButton("Mostrar grafo");
-        btnDetectIsolated = new JButton("Zonas aisladas (BFS)");
-        btnDijkstra = new JButton("Ruta más rápida");
-        btnFatigue = new JButton("Simular fatiga (x1.2)");
-        btnAddNeuron = new JButton("Agregar neurona");
-        btnRemoveNeuron = new JButton("Eliminar neurona");
-        btnSaveGraph = new JButton("Guardar grafo");
-        top.add(btnLoadGraph); top.add(btnLoadNeuro); top.add(btnShowGraph);
-        top.add(btnDetectIsolated); top.add(btnDijkstra); top.add(btnFatigue);
-        top.add(btnAddNeuron); top.add(btnRemoveNeuron); top.add(btnSaveGraph);
-        add(top, BorderLayout.NORTH);
-
-        JPanel center = new JPanel(new BorderLayout());
-        JPanel inputPanel = new JPanel(new GridLayout(4,2,5,5));
-        inputPanel.setBorder(BorderFactory.createTitledBorder("Parámetros"));
-        inputPanel.add(new JLabel("Neurona origen:"));
-        txtSource = new JTextField(); inputPanel.add(txtSource);
-        inputPanel.add(new JLabel("Neurona destino:"));
-        txtTarget = new JTextField(); inputPanel.add(txtTarget);
-        inputPanel.add(new JLabel("ID neurona (agregar/eliminar):"));
-        txtNeuronId = new JTextField(); inputPanel.add(txtNeuronId);
-        inputPanel.add(new JLabel("")); inputPanel.add(new JLabel(""));
-        center.add(inputPanel, BorderLayout.NORTH);
-
-        txtResult = new JTextArea(10,40);
+        
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        JButton btnLoadGraph = new JButton("Cargar Red");
+        JButton btnLoadDict = new JButton("Cargar Diccionario");
+        JButton btnShowGraph = new JButton("Visualizar Grafo");
+        JButton btnDetect = new JButton("Detectar Zonas Aisladas");
+        JButton btnFatigue = new JButton("Simular Fatiga");
+        JButton btnSave = new JButton("Guardar Red");
+        
+        topPanel.add(btnLoadGraph);
+        topPanel.add(btnLoadDict);
+        topPanel.add(btnShowGraph);
+        topPanel.add(btnDetect);
+        topPanel.add(btnFatigue);
+        topPanel.add(btnSave);
+        
+        JPanel algoPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        
+        JPanel dijkstraPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        dijkstraPanel.add(new JLabel("Origen:"));
+        txtSource = new JTextField(10);
+        dijkstraPanel.add(txtSource);
+        dijkstraPanel.add(new JLabel("Destino:"));
+        txtTarget = new JTextField(10);
+        dijkstraPanel.add(txtTarget);
+        JButton btnDijkstra = new JButton(" Calcular Ruta Optima");
+        dijkstraPanel.add(btnDijkstra);
+        
+        JPanel bfsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        rdBFS = new JRadioButton("BFS", true);
+        rdDFS = new JRadioButton("DFS");
+        bgAlgorithm = new ButtonGroup();
+        bgAlgorithm.add(rdBFS);
+        bgAlgorithm.add(rdDFS);
+        bfsPanel.add(new JLabel("Algoritmo para deteccion:"));
+        bfsPanel.add(rdBFS);
+        bfsPanel.add(rdDFS);
+        
+        algoPanel.add(dijkstraPanel);
+        algoPanel.add(bfsPanel);
+        
+        JPanel editPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        editPanel.add(new JLabel("ID Neurona:"));
+        txtNeuronId = new JTextField(10);
+        editPanel.add(txtNeuronId);
+        JButton btnAddNeuron = new JButton("Agregar Neurona");
+        JButton btnRemoveNeuron = new JButton("Eliminar Neurona");
+        JButton btnRemoveSynapse = new JButton("Eliminar Sinapsis");
+        editPanel.add(btnAddNeuron);
+        editPanel.add(btnRemoveNeuron);
+        editPanel.add(btnRemoveSynapse);
+        
+        txtResult = new JTextArea(15, 80);
         txtResult.setEditable(false);
-        txtResult.setFont(new Font("Monospaced", Font.PLAIN,12));
-        JScrollPane sp = new JScrollPane(txtResult);
-        sp.setBorder(BorderFactory.createTitledBorder("Resultados"));
-        center.add(sp, BorderLayout.CENTER);
-        add(center, BorderLayout.CENTER);
-
+        txtResult.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollPane = new JScrollPane(txtResult);
+        
+        JPanel northPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+        northPanel.add(topPanel);
+        northPanel.add(algoPanel);
+        northPanel.add(editPanel);
+        
+        add(northPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        
         btnLoadGraph.addActionListener(e -> loadGraph());
-        btnLoadNeuro.addActionListener(e -> loadNeuro());
+        btnLoadDict.addActionListener(e -> loadDictionary());
         btnShowGraph.addActionListener(e -> showGraph());
-        btnDetectIsolated.addActionListener(e -> detectIsolated());
+        btnDetect.addActionListener(e -> detectIsolated());
+        btnFatigue.addActionListener(e -> simulateFatigue());
+        btnSave.addActionListener(e -> saveGraph());
         btnDijkstra.addActionListener(e -> runDijkstra());
-        btnFatigue.addActionListener(e -> fatigue());
         btnAddNeuron.addActionListener(e -> addNeuron());
         btnRemoveNeuron.addActionListener(e -> removeNeuron());
-        btnSaveGraph.addActionListener(e -> saveGraph());
-
-        txtResult.append("Bienvenido a SynapseLogic.\nCargue red y diccionario.\n");
+        btnRemoveSynapse.addActionListener(e -> removeSynapse());
     }
-
+    
     private void loadGraph() {
         if (graphLoaded) {
-            int opt = JOptionPane.showConfirmDialog(this, "¿Guardar antes de cargar otra red?", "Confirmar", JOptionPane.YES_NO_CANCEL_OPTION);
-            if (opt == JOptionPane.YES_OPTION) { if (!fileManager.saveGraphToCSV()) return; }
-            else if (opt == JOptionPane.CANCEL_OPTION) return;
-            graph = new DirectedGraph();
-            neuroTable = new Map<>();
-            fileManager = new FileManager(graph, neuroTable);
-            graphLoaded = false;
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Ya hay una red cargada. Desea guardar antes de cargar una nueva?",
+                "Confirmar", JOptionPane.YES_NO_CANCEL_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                fileManager.saveGraphToCSV();
+            } else if (confirm == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
         }
-        if (fileManager.loadGraphFromCSV()) {
-            graphLoaded = true;
-            txtResult.append("Red cargada. Neuronas: " + graph.getAllNeurons().size() + "\n");
-        } else txtResult.append("No se cargó red.\n");
+        
+        fileManager.loadGraphFromCSV();
+        graphLoaded = true;
+        txtResult.append("Red cargada correctamente. Neuronas: " + graph.getNeurons().size() + "\n");
+        
+        if (visualizer != null) {
+            visualizer.close();
+            visualizer = null;
+        }
     }
-
-    private void loadNeuro() {
-        if (fileManager.loadNeurotransmitterDict())
-            txtResult.append("Diccionario cargado. (" + neuroTable.size() + " registros)\n");
-        else txtResult.append("No se cargó diccionario.\n");
+    
+    private void loadDictionary() {
+        fileManager.loadNeurotransmitterDict();
+        txtResult.append("Diccionario cargado. Neurotransmisores: " + neuroTable.size() + "\n");
     }
-
+    
     private void showGraph() {
-        if (!graphLoaded || graph.getAllNeurons().isEmpty()) { txtResult.append("No hay grafo cargado.\n"); return; }
-        if (visualizer == null) visualizer = new GraphVisualizer(graph);
+        if (!graphLoaded) {
+            txtResult.append("Primero cargue una red.\n");
+            return;
+        }
+        
+        if (visualizer == null) {
+            visualizer = new GraphVisualizer(graph);
+        }
         visualizer.updateGraph(null);
         visualizer.showInFrame();
-        txtResult.append("Grafo mostrado.\n");
     }
-
+    
     private void detectIsolated() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
-        String src = JOptionPane.showInputDialog(this, "Neurona fuente:", "Origen estímulo", JOptionPane.QUESTION_MESSAGE);
-        if (src == null || src.trim().isEmpty()) return;
-        src = src.trim();
-        if (!graph.hasNeuron(src)) { txtResult.append("Neurona " + src + " no existe.\n"); return; }
-        Set<String> unreachable = graph.getUnreachableZones(src);
-        if (unreachable.isEmpty()) txtResult.append("Desde " + src + " todas son alcanzables.\n");
-        else txtResult.append("Zonas inalcanzables: " + unreachable + "\n");
-        txtResult.append("Fuertemente conexo? " + (graph.isStronglyConnected() ? "Sí" : "No") + "\n");
-        if (visualizer != null) { visualizer.updateGraph(unreachable); visualizer.showInFrame(); }
+        if (!graphLoaded) {
+            txtResult.append("Primero cargue una red.\n");
+            return;
+        }
+        
+        String source = JOptionPane.showInputDialog(this, 
+            "Ingrese ID de neurona fuente:", "Origen");
+        
+        if (source == null || source.trim().isEmpty()) return;
+        
+        if (!graph.hasNeuron(source)) {
+            txtResult.append("Neurona '" + source + "' no existe.\n");
+            return;
+        }
+        
+        boolean usarBFS = rdBFS.isSelected();
+        Set<String> unreachable = graph.getUnreachableZones(source, usarBFS);
+        
+        if (unreachable.isEmpty()) {
+            txtResult.append("Desde '" + source + "' se alcanzan TODAS las neuronas.\n");
+        } else {
+            txtResult.append("Zonas inalcanzables desde '" + source + "': " + unreachable + "\n");
+            txtResult.append("   Tamanio: " + unreachable.size() + " neuronas aisladas\n");
+            
+            if (graph.isStronglyConnected()) {
+                txtResult.append("El grafo es fuertemente conexo.\n");
+            } else {
+                txtResult.append("El grafo NO es fuertemente conexo.\n");
+            }
+        }
+        
+        if (visualizer != null) {
+            visualizer.updateGraph(unreachable);
+        }
     }
-
-    private void runDijkstra() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
-        String src = txtSource.getText().trim();
-        String dst = txtTarget.getText().trim();
-        if (src.isEmpty() || dst.isEmpty()) { txtResult.append("Ingrese origen y destino.\n"); return; }
-        if (!graph.hasNeuron(src)) { txtResult.append("Origen no existe.\n"); return; }
-        if (!graph.hasNeuron(dst)) { txtResult.append("Destino no existe.\n"); return; }
-        DirectedGraph.DijkstraResult res = graph.dijkstra(src, dst, neuroTable);
-        if (res.path == null) txtResult.append("No hay camino.\n");
-        else txtResult.append("Ruta: " + String.join(" → ", res.path) + "\nTiempo: " + String.format("%.4f", res.totalTime) + "\n");
-    }
-
-    private void fatigue() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
+    
+    private void simulateFatigue() {
+        if (!graphLoaded) {
+            txtResult.append("Primero cargue una red.\n");
+            return;
+        }
+        
         graph.applyFatigue();
-        txtResult.append("Fatiga aplicada (k x1.2).\n");
+        txtResult.append("FATIGA APLICADA: Todos los coeficientes k fueron multiplicados por 1.2\n");
+        txtResult.append("Las sinapsis con k > 1.8 se consideran inaccesibles.\n");
+        
+        if (visualizer != null) {
+            visualizer.close();
+            visualizer = null;
+        }
     }
-
-    private void addNeuron() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
-        String id = txtNeuronId.getText().trim();
-        if (id.isEmpty()) { txtResult.append("Ingrese ID.\n"); return; }
-        if (graph.hasNeuron(id)) { txtResult.append("Ya existe.\n"); return; }
-        graph.addNeuron(id);
-        txtResult.append("Neurona " + id + " agregada.\n");
-        if (visualizer != null) visualizer.updateGraph(null);
-    }
-
-    private void removeNeuron() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
-        String id = txtNeuronId.getText().trim();
-        if (id.isEmpty()) { txtResult.append("Ingrese ID.\n"); return; }
-        if (!graph.hasNeuron(id)) { txtResult.append("No existe.\n"); return; }
-        graph.removeNeuron(id);
-        txtResult.append("Neurona " + id + " eliminada.\n");
-        if (visualizer != null) visualizer.updateGraph(null);
-    }
-
+    
     private void saveGraph() {
-        if (!graphLoaded) { txtResult.append("No hay grafo.\n"); return; }
-        if (fileManager.saveGraphToCSV()) txtResult.append("Grafo guardado.\n");
-        else txtResult.append("Error al guardar.\n");
+        if (!graphLoaded) {
+            txtResult.append("No hay datos para guardar.\n");
+            return;
+        }
+        fileManager.saveGraphToCSV();
     }
-
-    public static void main(String[] args) { SwingUtilities.invokeLater(() -> new MainGUI().setVisible(true)); }
+    
+    private void runDijkstra() {
+        if (!graphLoaded) {
+            txtResult.append("Primero cargue una red.\n");
+            return;
+        }
+        
+        if (neuroTable.isEmpty()) {
+            txtResult.append("No hay neurotransmisores cargados. Cargue un diccionario primero.\n");
+            return;
+        }
+        
+        String source = txtSource.getText().trim();
+        String target = txtTarget.getText().trim();
+        
+        if (source.isEmpty() || target.isEmpty()) {
+            txtResult.append("Complete origen y destino.\n");
+            return;
+        }
+        
+        if (!graph.hasNeuron(source)) {
+            txtResult.append("Neurona origen '" + source + "' no existe.\n");
+            return;
+        }
+        
+        if (!graph.hasNeuron(target)) {
+            txtResult.append("Neurona destino '" + target + "' no existe.\n");
+            return;
+        }
+        
+        DijkstraResult result = graph.dijkstra(source, target, neuroTable);
+        
+        if (result.hasPath()) {
+            txtResult.append("Ruta optima: " + result.getPathString() + "\n");
+            txtResult.append("Tiempo total: " + String.format("%.4f", result.getTotalTime()) + "\n");
+        } else {
+            txtResult.append("No existe ruta de '" + source + "' a '" + target + "'\n");
+            txtResult.append("(puede deberse a desconexion o fatiga)\n");
+        }
+    }
+    
+    private void addNeuron() {
+        String id = txtNeuronId.getText().trim();
+        if (id.isEmpty()) {
+            txtResult.append("Ingrese un ID para la nueva neurona.\n");
+            return;
+        }
+        
+        if (graph.hasNeuron(id)) {
+            txtResult.append("La neurona '" + id + "' ya existe.\n");
+            return;
+        }
+        
+        graph.addNeuron(id);
+        txtResult.append("Neurona '" + id + "' agregada.\n");
+        
+        if (visualizer != null) {
+            visualizer.updateGraph(null);
+        }
+    }
+    
+    private void removeNeuron() {
+        String id = txtNeuronId.getText().trim();
+        if (id.isEmpty()) {
+            txtResult.append("Ingrese el ID de la neurona a eliminar.\n");
+            return;
+        }
+        
+        if (!graph.hasNeuron(id)) {
+            txtResult.append("La neurona '" + id + "' no existe.\n");
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Eliminar neurona '" + id + "' y todas sus conexiones?",
+            "Confirmar", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            graph.removeNeuron(id);
+            txtResult.append("Neurona '" + id + "' eliminada.\n");
+            
+            if (visualizer != null) {
+                visualizer.updateGraph(null);
+            }
+        }
+    }
+    
+    private void removeSynapse() {
+        if (!graphLoaded) {
+            txtResult.append("Primero cargue una red.\n");
+            return;
+        }
+        
+        String origen = JOptionPane.showInputDialog(this, "Ingrese ID de neurona origen:", "Eliminar Sinapsis");
+        if (origen == null || origen.trim().isEmpty()) return;
+        
+        if (!graph.hasNeuron(origen)) {
+            txtResult.append("Neurona origen '" + origen + "' no existe.\n");
+            return;
+        }
+        
+        String destino = JOptionPane.showInputDialog(this, "Ingrese ID de neurona destino:", "Eliminar Sinapsis");
+        if (destino == null || destino.trim().isEmpty()) return;
+        
+        if (!graph.hasNeuron(destino)) {
+            txtResult.append("Neurona destino '" + destino + "' no existe.\n");
+            return;
+        }
+        
+        boolean eliminado = graph.removeSynapse(origen, destino);
+        if (eliminado) {
+            txtResult.append("Sinapsis de '" + origen + "' a '" + destino + "' eliminada.\n");
+            if (visualizer != null) {
+                visualizer.updateGraph(null);
+            }
+        } else {
+            txtResult.append("No existe sinapsis de '" + origen + "' a '" + destino + "'.\n");
+        }
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new MainGUI().setVisible(true);
+        });
+    }
 }
